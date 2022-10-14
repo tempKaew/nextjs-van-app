@@ -16,6 +16,7 @@ export default async function handler(
     res.status(200).json({
       status: 'success'
     })
+    return;
   }
 
   const replyToken = req.body.events[0].replyToken
