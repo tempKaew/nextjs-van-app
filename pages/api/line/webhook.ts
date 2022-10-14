@@ -12,7 +12,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.body.events.length === 0) {
+  if (req.body.events && req.body.events.length === 0) {
     res.status(200).json({
       status: 'success'
     })
