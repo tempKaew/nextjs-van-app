@@ -8,33 +8,44 @@ const clientConfig: ClientConfig = {
 
 const client = new Client(clientConfig);
 
+const textEventHandler = async (event: object) => {
+  const message = event.message.text
+  const response: TextMessage = {
+    type: 'text',
+    text: 'return : ' + message
+  };
+  const replyToken = event.replyToken
+  await client.replyMessage(replyToken, response);
+}
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  if (req.body.events && req.body.events.length === 0) {
-    res.status(200).json({
+  const events: WebhookEvent[] = req.body.events;
+
+  if (events===undefined) {
+    return res.status(200).json({
       status: 'success'
-    })
-    return;
+    });
   }
 
-  const replyToken = req.body.events[0].replyToken
+  const results = await Promise.all(
+    events.map(async (event: WebhookEvent) => {
+      if (event.type === 'message' && event.message.type === 'text') {
+        try {
+          await textEventHandler(event);
+        } catch (err: unknown) {
+          if (err instanceof Error) {
+            console.error(err);
+          }
+        }
+      }
+    })
+  );
 
-  const response: TextMessage = {
-    type: 'text',
-    text: 'test'
-  };
-
-  // Reply to the user.
-  await client.replyMessage(replyToken, response);
-
-  // client.broadcast({
-  //   type: "text",
-  //   text: 'test'
-  // })
-  // .then(data => console.log(data))
-  // .catch(e => console.log(e))
-
-  res.status(200).json({})
+  return res.status(200).json({
+    status: 'success',
+    results,
+  });
 }
